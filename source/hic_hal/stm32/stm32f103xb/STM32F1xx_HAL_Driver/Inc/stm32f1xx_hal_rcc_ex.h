@@ -123,7 +123,7 @@
                                  ((__MUL__) == RCC_PLL_MUL10) || ((__MUL__) == RCC_PLL_MUL11) || \
                                  ((__MUL__) == RCC_PLL_MUL12) || ((__MUL__) == RCC_PLL_MUL13) || \
                                  ((__MUL__) == RCC_PLL_MUL14) || ((__MUL__) == RCC_PLL_MUL15) || \
-                                 ((__MUL__) == RCC_PLL_MUL16))
+                                 ((__MUL__) == RCC_PLL_MUL16) || ((__MUL__) == RCC_PLL_MUL32) || ((__MUL__) == RCC_PLL_MUL27))
 
 #define IS_RCC_MCO1SOURCE(__SOURCE__) (((__SOURCE__) == RCC_MCO1SOURCE_SYSCLK)  || ((__SOURCE__) == RCC_MCO1SOURCE_HSI) \
                                     || ((__SOURCE__) == RCC_MCO1SOURCE_HSE)     || ((__SOURCE__) == RCC_MCO1SOURCE_PLLCLK) \
@@ -575,6 +575,8 @@ typedef struct
 #define RCC_PLL_MUL14                   RCC_CFGR_PLLMULL14
 #define RCC_PLL_MUL15                   RCC_CFGR_PLLMULL15
 #define RCC_PLL_MUL16                   RCC_CFGR_PLLMULL16
+#define RCC_PLL_MUL27                   ((uint32_t)0x10280000)
+#define RCC_PLL_MUL32                   ((uint32_t)0x103C0000)
 #endif /* STM32F105xC || STM32F107xC */
 
 /**

@@ -31,6 +31,39 @@ uint32_t time_count;
 
 static uint32_t tim2_clk_div(uint32_t apb1clkdiv);
 
+#define SysFreq_Set		(*((void (*)(uint32_t, uint32_t, uint8_t, uint8_t))(*(uint32_t *)0x1FFFD00C)))
+
+static __attribute__((optimize("-O0"))) uint32_t AIR_RCC_PLLConfig(uint32_t RCC_PLLSource, uint32_t RCC_PLLMul, uint8_t Latency)
+{
+    volatile uint32_t sramsize = 0;
+    uint32_t pllmul = 0;
+    FunctionalState pwr_gating_state = 0;
+    /* Check the parameters */
+    assert_param(IS_RCC_PLL_SOURCE(RCC_PLLSource));
+    assert_param(IS_RCC_PLL_MUL(RCC_PLLMul));
+
+    *(volatile uint32_t *)(0x400210F0) = 0b1;//开启sys_cfg门控
+    *(volatile uint32_t *)(0x40016C00) = 0xa7d93a86;//解一、二、三级锁
+    *(volatile uint32_t *)(0x40016C00) = 0xab12dfcd;
+    *(volatile uint32_t *)(0x40016C00) = 0xcded3526;
+    sramsize = *(volatile uint32_t *)(0x40016C18);
+    *(volatile uint32_t *)(0x40016C18) = 0x200183FF;//配置sram大小, 将BOOT使用对sram打开
+    *(volatile uint32_t *)(0x4002228C) = 0xa5a5a5a5;//QSPI解锁
+
+    SysFreq_Set(RCC_PLLMul,Latency ,(uint8_t)0,(uint8_t)1);
+    RCC->CFGR = (RCC->CFGR & ~0x00030000) | RCC_PLLSource;
+
+    //恢复配置前状态
+    *(volatile uint32_t *)(0x40016C18) = sramsize;
+    *(volatile uint32_t *)(0x400210F0) = 0;//开启sys_cfg门控
+    *(volatile uint32_t *)(0x40016C00) = ~0xa7d93a86;//加一、二、三级锁
+    *(volatile uint32_t *)(0x40016C00) = ~0xab12dfcd;
+    *(volatile uint32_t *)(0x40016C00) = ~0xcded3526;
+    *(volatile uint32_t *)(0x4002228C) = ~0xa5a5a5a5;//QSPI解锁
+
+    return 1;
+}
+
 /**
     * @brief  Switch the PLL source from HSI to HSE bypass, and select the PLL as SYSCLK
   *         source.
@@ -86,6 +119,13 @@ void sdk_init()
         /* Initialization Error */
         util_assert(0);
     }
+
+    __HAL_RCC_PLL_DISABLE();
+//    __HAL_RCC_PLL_CONFIG(RCC_PLLSOURCE_HSE, RCC_PLL_MUL27);
+    AIR_RCC_PLLConfig(0x00010000, 0x10280000, 1); // HSE, PLL x27, flash latency 1
+//    RCC->CFGR |= ((volatile uint32_t)0x80800000);
+    __HAL_RCC_PLL_ENABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY)  == RESET) {};
 }
 
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
